@@ -7,7 +7,6 @@ defmodule Makeup.Lexers.DiffLexer do
 
   import NimbleParsec
   import Makeup.Lexer.Combinators
-  # import Makeup.Lexer.Groups
 
   whitespace =
     [?\r, ?\s, ?\n, ?\f]
@@ -34,9 +33,15 @@ defmodule Makeup.Lexers.DiffLexer do
     |> concat(line)
     |> token(:generic_strong)
 
+  heading =
+    [string("diff"), string("index")]
+    |> choice()
+    |> concat(line)
+    |> token(:generic_heading)
+
   text = token(line, :text)
 
-  root_element_combinator = choice([whitespace, inserted, deleted, strong, text])
+  root_element_combinator = choice([whitespace, heading, inserted, deleted, strong, text])
 
   @doc false
   def __as_diff_language__({type, meta, value}) do
@@ -44,30 +49,19 @@ defmodule Makeup.Lexers.DiffLexer do
   end
 
   @impl Makeup.Lexer
-  defparsec(:root_element, root_element_combinator |> map({__MODULE__, :__as_diff_language__, []}))
+  defparsec(
+    :root_element,
+    root_element_combinator |> map({__MODULE__, :__as_diff_language__, []})
+  )
 
   @impl Makeup.Lexer
   defparsec(:root, repeat(parsec(:root_element)))
 
   @impl Makeup.Lexer
-  def postprocess(tokens, _opts \\ []) do
-    tokens
-  end
+  def postprocess(tokens, _opts \\ []), do: tokens
 
   @impl Makeup.Lexer
-  def match_groups(tokens, _opts \\ []) do
-    tokens
-  end
-  # defgroupmatcher(:match_groups,
-  #   added_tag: [
-  #     open: [[{:punctuation, _, "+"}]],
-  #     close: [[{:punctuation, _, "\n"}]]
-  #   ],
-  #   removed_tag: [
-  #     open: [[{:punctuation, _, "-"}]],
-  #     close: []
-  #   ]
-  # )
+  def match_groups(tokens, _opts \\ []), do: tokens
 
   @impl Makeup.Lexer
   def lex(text, _opts \\ []) do

@@ -48,6 +48,7 @@ defmodule MakeupDiff.MixProject do
   defp deps do
     [
       {:makeup, "~> 1.0"},
+      {:stream_data, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
