@@ -1,0 +1,35 @@
+name: Continuous Integration
+
+on: push
+
+jobs:
+  ci:
+    env:
+      MIX_ENV: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '24'
+          elixir-version: '1.13.3'
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Run mix deps.compile
+        run: mix deps.compile
+
+      - name: Run mix compile
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        run: mix test
