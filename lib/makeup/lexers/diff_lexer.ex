@@ -6,56 +6,30 @@ defmodule Makeup.Lexers.DiffLexer do
   @behaviour Makeup.Lexer
 
   import NimbleParsec
-  import Makeup.Lexer.Combinators
+  import Makeup.Lexers.DiffLexer.Helper
 
-  whitespace =
-    [?\r, ?\s, ?\n, ?\f]
-    |> ascii_string(min: 1)
-    |> token(:whitespace)
+  heading = line_starting_with(["diff", "index"], :generic_heading)
+  inserted = line_starting_with(["+", ">"], :generic_inserted)
+  deleted = line_starting_with(["-", "<"], :generic_deleted)
+  strong = line_starting_with("!", :generic_strong)
 
-  line = utf8_string([{:not, ?\n}, {:not, ?\r}], min: 1)
+  root_element_combinator =
+    choice([heading, inserted, deleted, strong, text_line()])
+    |> map(:add_meta_diff_language)
 
-  inserted =
-    [string("+"), string(">")]
-    |> choice()
-    |> concat(line)
-    |> token(:generic_inserted)
-
-  deleted =
-    [string("-"), string("<")]
-    |> choice()
-    |> concat(line)
-    |> token(:generic_deleted)
-
-  strong =
-    "!"
-    |> string()
-    |> concat(line)
-    |> token(:generic_strong)
-
-  heading =
-    [string("diff"), string("index")]
-    |> choice()
-    |> concat(line)
-    |> token(:generic_heading)
-
-  text = token(line, :text)
-
-  root_element_combinator = choice([whitespace, heading, inserted, deleted, strong, text])
-
-  @doc false
-  def __as_diff_language__({type, meta, value}) do
+  defp add_meta_diff_language({type, meta, value}) do
     {type, Map.put(meta, :language, :diff), value}
   end
 
   @impl Makeup.Lexer
-  defparsec(
-    :root_element,
-    root_element_combinator |> map({__MODULE__, :__as_diff_language__, []})
-  )
+  defparsec(:root_element, root_element_combinator)
 
   @impl Makeup.Lexer
-  defparsec(:root, repeat(parsec(:root_element)))
+  defparsec(
+    :root,
+    repeat(parsec(:root_element) |> concat(newline()))
+    |> choice([ignore(eos()), parsec(:root_element)])
+  )
 
   @impl Makeup.Lexer
   def postprocess(tokens, _opts \\ []), do: tokens

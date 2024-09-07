@@ -72,10 +72,10 @@ defmodule Makeup.Lexers.DiffLexerTest do
       +++ b/setup
       @@ -11,16 +11,22 @@ context line
        unchanged
-       + inserted
-       - deleted
-       > inserted
-       < deleted
+      +inserted
+      -deleted
+      >inserted
+      <deleted
       """
 
       lexed =
@@ -89,11 +89,11 @@ defmodule Makeup.Lexers.DiffLexerTest do
                {:generic_deleted, %{}, "--- a/setup"},
                {:generic_inserted, %{}, "+++ b/setup"},
                {:text, %{}, "@@ -11,16 +11,22 @@ context line"},
-               {:text, %{}, "unchanged"},
-               {:generic_inserted, %{}, "+ inserted"},
-               {:generic_deleted, %{}, "- deleted"},
-               {:generic_inserted, %{}, "> inserted"},
-               {:generic_deleted, %{}, "< deleted"}
+               {:text, %{}, " unchanged"},
+               {:generic_inserted, %{}, "+inserted"},
+               {:generic_deleted, %{}, "-deleted"},
+               {:generic_inserted, %{}, ">inserted"},
+               {:generic_deleted, %{}, "<deleted"}
              ] = lexed
     end
   end
