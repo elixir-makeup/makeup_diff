@@ -23,7 +23,7 @@ defmodule Makeup.Lexers.DiffLexer.Helper do
   end
 
   defp rest_of_line(combinator \\ empty()) do
-    utf8_string(combinator, [not: 10, not: 13], min: 0)
+    utf8_string(combinator, [not: ?\n, not: ?\r], min: 0)
   end
 
   def newline(combinator \\ empty()) do
