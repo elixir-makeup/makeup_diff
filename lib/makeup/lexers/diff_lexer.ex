@@ -13,7 +13,7 @@ defmodule Makeup.Lexers.DiffLexer do
   deleted = line_starting_with(["-", "<"], :generic_deleted)
   strong = line_starting_with("!", :generic_strong)
 
-  root_element_combinator =
+  line =
     choice([heading, inserted, deleted, strong, text_line()])
     |> map(:add_meta_diff_language)
 
@@ -22,14 +22,10 @@ defmodule Makeup.Lexers.DiffLexer do
   end
 
   @impl Makeup.Lexer
-  defparsec(:root_element, root_element_combinator)
+  defparsec(:root_element, line |> optional(newline()))
 
   @impl Makeup.Lexer
-  defparsec(
-    :root,
-    repeat(parsec(:root_element) |> concat(newline()))
-    |> choice([ignore(eos()), parsec(:root_element)])
-  )
+  defparsec(:root, repeat(line |> newline()) |> choice([eos(), line]))
 
   @impl Makeup.Lexer
   def postprocess(tokens, _opts \\ []), do: tokens

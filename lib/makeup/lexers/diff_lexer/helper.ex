@@ -11,7 +11,7 @@ defmodule Makeup.Lexers.DiffLexer.Helper do
   end
 
   def line_starting_with([_, _ | _] = start, token_type) do
-    List.wrap(start)
+    start
     |> Enum.map(&string/1)
     |> choice()
     |> rest_of_line()
@@ -23,11 +23,10 @@ defmodule Makeup.Lexers.DiffLexer.Helper do
   end
 
   defp rest_of_line(combinator \\ empty()) do
-    repeat(combinator, utf8_char([{:not, ?\n}, {:not, ?\r}]))
+    utf8_string(combinator, [not: 10, not: 13], min: 0)
   end
 
-  def newline() do
-    times(utf8_char([?\n, ?\r]), min: 1)
-    |> token(:whitespace)
+  def newline(combinator \\ empty()) do
+    concat(combinator, ascii_string([?\n, ?\r], min: 1) |> token(:whitespace))
   end
 end
