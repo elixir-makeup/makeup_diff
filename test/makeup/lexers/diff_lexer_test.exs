@@ -29,13 +29,13 @@ defmodule Makeup.Lexers.DiffLexerTest do
       end
     end
 
-    property "lexting a string with an insertion" do
+    property "lexing a string with an insertion" do
       check all text <- inserted() do
         assert [{:generic_inserted, %{}, ^text} | _] = lex(text)
       end
     end
 
-    property "lexting a string with a deletion" do
+    property "lexing a string with a deletion" do
       check all text <- deleted() do
         assert [{:generic_deleted, %{}, ^text}] = lex(text)
       end
@@ -72,16 +72,13 @@ defmodule Makeup.Lexers.DiffLexerTest do
       +++ b/setup
       @@ -11,16 +11,22 @@ context line
        unchanged
-       + inserted
-       - deleted
-       > inserted
-       < deleted
+      +inserted
+      -deleted
+      >inserted
+      <deleted
       """
 
-      lexed =
-        text
-        |> lex()
-        |> Enum.reject(fn {type, _, _} -> type == :whitespace end)
+      lexed = lex(text, omit_whitespaces: true)
 
       assert [
                {:generic_heading, %{}, "diff --git a/setup"},
@@ -89,20 +86,47 @@ defmodule Makeup.Lexers.DiffLexerTest do
                {:generic_deleted, %{}, "--- a/setup"},
                {:generic_inserted, %{}, "+++ b/setup"},
                {:text, %{}, "@@ -11,16 +11,22 @@ context line"},
-               {:text, %{}, "unchanged"},
-               {:generic_inserted, %{}, "+ inserted"},
-               {:generic_deleted, %{}, "- deleted"},
-               {:generic_inserted, %{}, "> inserted"},
-               {:generic_deleted, %{}, "< deleted"}
+               {:text, %{}, " unchanged"},
+               {:generic_inserted, %{}, "+inserted"},
+               {:generic_deleted, %{}, "-deleted"},
+               {:generic_inserted, %{}, ">inserted"},
+               {:generic_deleted, %{}, "<deleted"}
+             ] = lexed
+    end
+
+    test "marker expected in first position of each line" do
+      text = """
+       +text
+       -text
+      +-inserted
+      <>deleted
+       <text />
+      """
+
+      lexed = lex(text, omit_whitespaces: true)
+
+      assert [
+               {:text, %{}, " +text"},
+               {:text, %{}, " -text"},
+               {:generic_inserted, %{}, "+-inserted"},
+               {:generic_deleted, %{}, "<>deleted"},
+               {:text, %{}, " <text />"}
              ] = lexed
     end
   end
 
-  defp lex(text) do
+  defp lex(text, opts \\ []) do
     text
     |> DiffLexer.lex(group_prefix: "group")
     |> Postprocess.token_values_to_binaries()
     |> Enum.map(fn {type, meta, value} -> {type, Map.delete(meta, :language), value} end)
+    |> then(fn tokens ->
+      if Keyword.get(opts, :omit_whitespaces, false) do
+        Enum.reject(tokens, fn {type, _, _} -> type == :whitespace end)
+      else
+        tokens
+      end
+    end)
   end
 
   # Properties
