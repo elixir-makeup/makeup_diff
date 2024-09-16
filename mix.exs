@@ -4,7 +4,7 @@ defmodule MakeupDiff.MixProject do
   def project do
     [
       app: :makeup_diff,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -14,9 +14,7 @@ defmodule MakeupDiff.MixProject do
       description: description(),
       docs: [
         main: "readme",
-        extras: [
-          "README.md"
-        ]
+        extras: ~w(CHANGELOG.md README.md)
       ]
     ]
   end
